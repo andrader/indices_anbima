@@ -14,17 +14,15 @@ from time import sleep
 from datetime import date, datetime
 import datatest
 import sqlite3
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import random
 import unidecode
-
-tqdm.pandas(leave=False)
 
 
 # In[270]:
 
-
 url = 'https://www.anbima.com.br/informacoes/ima/ima-sh-down.asp'
+
 params = {
     "Idioma": "PT",
     "Dt_Ref": "20/03/2021",
@@ -179,4 +177,4 @@ def scrape_indices_to(db_table_name, db_name='data.sqlite'):
 
 if __name__=='__main__':
     
-    scrape_indices_to('data2', 'data.sqlite')
+    scrape_indices_to('data', 'data.sqlite')
