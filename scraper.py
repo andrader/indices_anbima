@@ -137,10 +137,10 @@ def scrape_indices_to(db_table_name, db_name='data.sqlite'):
         # progress bar
         pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}')
         # scrape bdays in month
-        df = pd.concat((get_indices_anbima(dt) for dt in pbar), ignore_index=True)
+        df = pd.concat((get_indices_anbima(dt,wait=0.5) for dt in pbar), ignore_index=True)
         # add df to db
         with sqlite3.connect(db_name) as conn:
-            df.to_sql(table_name, conn, if_exists="append", index=False)
+            df.to_sql(db_table_name, conn, if_exists="append", index=False)
     
     return
 
