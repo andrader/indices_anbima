@@ -135,7 +135,7 @@ def scrape_indices_to(db_table_name, db_name='data.sqlite'):
     for month, days in tqdm(dates.groupby(pd.Grouper(freq='MS')),unit='mês',
                             desc=f'De {dtf(dt_start)} até {dtf(dt_end)}. Meses'):
         # progress bar
-        pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}')
+        pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}',position=0)
         # scrape bdays in month
         df = pd.concat((get_indices_anbima(dt,wait=0.5) for dt in pbar), ignore_index=True)
         # add df to db
