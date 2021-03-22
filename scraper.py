@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[23]:
-
-# pip install pipreqs
-# in the folder, run: "pipreqs ." to get requirements.txt
-
 import requests
 import pandas as pd
 import numpy as np
@@ -18,8 +12,9 @@ from tqdm import tqdm
 import random
 import unidecode
 
-
-# In[270]:
+# to generate requirements.txt:
+# > pip install pipreqs
+# > pipreqs .
 
 url = 'https://www.anbima.com.br/informacoes/ima/ima-sh-down.asp'
 
@@ -68,8 +63,6 @@ uas = pd.read_table('input/user-agents.txt',names=['ua'],skiprows=4,squeeze=True
 fer = pd.read_excel('input/feriados_nacionais.xls',skipfooter=9, usecols=['Data'], parse_dates=['Data'], squeeze=True)
 bday = pd.offsets.CDay(holidays=fer)
 
-
-# In[268]:
 
 
 # helpers
@@ -127,10 +120,6 @@ def get_max_dt_db(db_table_name, db_name='data.sqlite', default_dt='2001-12-03')
     return dt_max
 
 
-# ## Scraper
-
-# In[269]:
-
 
 def scrape_indices_to(db_table_name, db_name='data.sqlite'):
     # generate date series
@@ -139,7 +128,9 @@ def scrape_indices_to(db_table_name, db_name='data.sqlite'):
     dates = pd.bdate_range(dt_start, dt_end, freq="C", holidays=fer).to_series()
     
     if len(dates)==0:
-        print('Nothing to update!')
+        print('Already update!', dtf(dt_start), dtf(dt_end))
+        return
+
     
     for month, days in tqdm(dates.groupby(pd.Grouper(freq='MS')),unit='mês',
                             desc=f'De {dtf(dt_start)} até {dtf(dt_end)}. Meses'):
@@ -154,27 +145,6 @@ def scrape_indices_to(db_table_name, db_name='data.sqlite'):
     return
 
 
-
-# # Deleta Registros Inválidos
-
-# In[279]:
-
-
-# def run(q):
-#     with sqlite3.connect(r'C:\Users\rubens\indices_anbima\data.sqlite') as conn:
-#         res = conn.execute(q).fetchall()
-#     return res
-
-# ndel = run("SELECT count(*) FROM data WHERE indice LIKE 'No columns to parse from file%'")
-# if input(f'To delete {ndel} rows?[y/n]')=='y':
-#     # cria tabela de backup
-#     run("DROP TABLE IF EXISTS data_bkp")
-#     run("CREATE TABLE data_bkp AS SELECT * FROM data")
-#     # deleta linhs onde indice é 'No columns to parse from file...'
-#     run("DELETE FROM data WHERE indice LIKE 'No columns to parse from file%'")
-#     print('Deleted.')
-
-
 if __name__=='__main__':
     
-    scrape_indices_to('data', 'data.sqlite')
+    scrape_indices_to('data', "data.sqlite")
