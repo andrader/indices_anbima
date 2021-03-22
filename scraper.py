@@ -126,16 +126,17 @@ def scrape_indices_to(db_table_name, db_name='data.sqlite'):
     dt_start = get_max_dt_db(db_table_name) + bday # next Bizday
     dt_end = pd.Timestamp.today().normalize() - bday # last Bizday
     dates = pd.bdate_range(dt_start, dt_end, freq="C", holidays=fer).to_series()
+    print( dtf(dt_start), dtf(dt_end))
     
     if len(dates)==0:
-        print('Already update!', dtf(dt_start), dtf(dt_end))
+        print('Already update!')
         return
 
-    
+    print('Starting...')
     for month, days in tqdm(dates.groupby(pd.Grouper(freq='MS')),unit='mês',
                             desc=f'De {dtf(dt_start)} até {dtf(dt_end)}. Meses'):
         # progress bar
-        pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}',position=0)
+        pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}')
         # scrape bdays in month
         df = pd.concat((get_indices_anbima(dt,wait=0.5) for dt in pbar), ignore_index=True)
         # add df to db
