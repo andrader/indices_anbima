@@ -12,6 +12,8 @@ from tqdm import tqdm
 import random
 import unidecode
 
+from helpers import clean_names, dtf
+
 # to generate requirements.txt:
 # > pip install pipreqs
 # > pipreqs .
@@ -27,14 +29,6 @@ params = {
     "Consulta": "Ambos",
     "saida": "csv"
 }
-
-nomes_validos = [
-        'indice', 'data_referencia', 'numero_indice', 'variacao_diaria',
-        'variacao_mes', 'variacao_ano', 'variacao_12_meses',
-        'variacao_24_meses', 'peso', 'duration', 'carteira_a_mercado',
-        'numero_operacoes', 'quant_negociada_titulos', 'valor_negociado', 'pmr',
-        'convexidade', 'yield', 'redemption_yield'
-    ]
 
 valid_dtypes = {
     'indice': 'O',
@@ -57,22 +51,14 @@ valid_dtypes = {
     'redemption_yield': 'float64'
 }
 
+nomes_validos = list(valid_dtypes.keys())
+
 # lista de user agents
 uas = pd.read_table('input/user-agents.txt',names=['ua'],skiprows=4,squeeze=True)
 # lista de feriados anbima
 fer = pd.read_excel('input/feriados_nacionais.xls',skipfooter=9, usecols=['Data'], parse_dates=['Data'], squeeze=True)
 bday = pd.offsets.CDay(holidays=fer)
 
-
-
-# helpers
-def dtf(x): return x.strftime("%d/%m/%Y")
-
-def clean_names(s, to_remove=[]):
-    s2 = s.map(lambda x: unidecode.unidecode(x))
-    for c in to_remove:
-        s2 = s2.str.replace(c, " ", regex=False)
-    return s2.str.strip().str.split().str.join("_").str.lower()
 
 
 def get_indices_anbima(dt, wait=True):
@@ -122,30 +108,33 @@ def get_max_dt_db(db_table_name, db_name='data.sqlite', default_dt='2001-12-03')
 
 
 def scrape_indices_to(db_table_name, db_name='data.sqlite'):
+    print('Starting...')
     # generate date series
-    dt_start = get_max_dt_db(db_table_name) + bday # next Bizday
-    dt_end = pd.Timestamp.today().normalize() - bday # last Bizday
-    dates = pd.bdate_range(dt_start, dt_end, freq="C", holidays=fer).to_series()
+    dt_start = get_max_dt_db(db_table_name)
+    dt_end = pd.Timestamp.today().normalize() - bday
+    dates = pd.bdate_range(dt_start+ bday, dt_end, freq="C", holidays=fer).to_series()
     print( dtf(dt_start), dtf(dt_end))
     
     if len(dates)==0:
         print('Already update!')
         return
 
-    print('Starting...')
     for month, days in tqdm(dates.groupby(pd.Grouper(freq='MS')),unit='mês',
                             desc=f'De {dtf(dt_start)} até {dtf(dt_end)}. Meses'):
         # progress bar
-        pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}')
+        pbar = tqdm(days,leave=False,unit='day', desc=f'Scraping {month.strftime("%Y-%m")}', position=0)
         # scrape bdays in month
         df = pd.concat((get_indices_anbima(dt,wait=0.5) for dt in pbar), ignore_index=True)
+        
         # add df to db
+        print('\nSaving to table')
         with sqlite3.connect(db_name) as conn:
             df.to_sql(db_table_name, conn, if_exists="append", index=False)
-    
+    print('\nSuccess!')
     return
 
 
 if __name__=='__main__':
     
     scrape_indices_to('data', "data.sqlite")
+    print('\nEnd.')
