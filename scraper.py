@@ -10,7 +10,6 @@ import datatest
 import sqlite3
 from tqdm import tqdm
 import random
-import unidecode
 
 from helpers import clean_names, dtf
 
